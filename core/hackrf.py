@@ -118,15 +118,19 @@ class HackRf():
 
 	def set_sample_rate(self, freq, div):
 		''' Sets the sample rate of the hack rf device '''
-		p =  struct.pack('II', freq, div)
-		print "".join(["/x%02x" % ord(c) for c in p]) #
+		p =  struct.pack('>II', freq, div)
+		#Print struct to make sure it looks right
+		# print "".join(["/x%02x" % ord(c) for c in p]) #
 		result = self.device.ctrl_transfer(HackRfConstants.HACKRF_DEVICE_OUT,
 			HackRfVendorRequest.HACKRF_VENDOR_REQUEST_SAMPLE_RATE_SET,
 			0,
 			0,
 			p,
 			len(p))
-		print result
+		if result < len(p):
+			logger.error('Error setting sample rate')
+		else:
+			logger.debug('Set Sample rate')
 
 	def set_rx_mode(self):
 		''' This sets the HackRf in receive mode '''
