@@ -2,29 +2,29 @@ import usb
 import struct
 import logging
 import hackrf 
-logger = logging.getLogger('HackRf Max2837')
+logger = logging.getLogger('HackRf RFFC5071')
 logger.setLevel(logging.DEBUG)
 
-class Max2837():
+class RFFC5071():
 
 	def __init__(self, hackRf):
 		self.hackRf = hackRf		
 
 	def write_register(self, register_number, value):
-		''' Writes a value to the Max 2837 chip's register '''
-		if register_number in range(32):
+		''' Writes a value to the RFFC5071 chip's register '''
+		if register_number in range(30):
 			self.hackRf.device.ctrl_transfer(hackrf.HackRfConstants.HACKRF_DEVICE_OUT,
-			hackrf.HackRfVendorRequest.HACKRF_VENDOR_REQUEST_MAX2837_WRITE,
+			hackrf.HackRfVendorRequest.HACKRF_VENDOR_REQUEST_RFFC5071_WRITE,
 			value,
 			register_number)
 		else:
 			logger.warning('Invalid Register Number [%d]' % register_number)
 
 	def read_register(self, register_number):
-		''' Read a value from the Max 2837 chip's register '''
-		if register_number in range(32):
+		''' Read a value from the RFFC5071 chip's register '''
+		if register_number in range(30):
 			return struct.unpack('<H', self.hackRf.device.ctrl_transfer(hackrf.HackRfConstants.HACKRF_DEVICE_IN,
-			hackrf.HackRfVendorRequest.HACKRF_VENDOR_REQUEST_MAX2837_READ, 
+			hackrf.HackRfVendorRequest.HACKRF_VENDOR_REQUEST_RFFC5071_READ, 
 			0, 
 			register_number,
 			2))[0]

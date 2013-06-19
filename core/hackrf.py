@@ -4,6 +4,8 @@ import struct
 import array
 import logging
 from max2837 import Max2837
+from si5351c import SI5351C
+from rffc5071 import RFFC5071
 
 logging.basicConfig()
 logger = logging.getLogger('HackRf Core')
@@ -57,6 +59,8 @@ HackRfTranscieverMode = enum(
 	HACKRF_TRANSCEIVER_MODE_RECEIVE = 1,
 	HACKRF_TRANSCEIVER_MODE_TRANSMIT = 2)
 
+FREQ_ONE_MHZ = 1000 * 1000;
+
 class HackRf():
 	''' This is the base object for the HackRf Device, and interaction with it '''
 	__JELLYBEAN__ = 'Jellybean'
@@ -66,6 +70,8 @@ class HackRf():
 		self.name = name
 		self.device = None
 		self.max2837 = None
+		self.si5351c = None
+		self.rffc5071 = None
 		logger.error(HackRfVendorRequest.HACKRF_VENDOR_REQUEST_SET_TRANSCEIVER_MODE)
 
 	def setup(self):
@@ -77,6 +83,8 @@ class HackRf():
 			else:
 				self.device.set_configuration()
 				self.max2837 = Max2837(self)
+				self.si5351c = SI5351C(self)
+				self.rffc5071 = RFFC5071(self)
 				logger.debug('Successfully setup HackRf device')
 
 	def get_board_id(self):
@@ -116,6 +124,43 @@ class HackRf():
 		serial_four = get_serial(serial[:4])
 		return (serial_one, serial_two, serial_three, serial_four)
 
+	def set_baseband_filter_bandwidth(self, bandwidth_hz):
+		''' 
+		Set baseband filter bandwidth in MHz.
+			Possible values: 1.75/2.5/3.5/5/5.5/6/7/8/9/10/12/14/15/20/24/28MHz,
+			default < sample_rate_hz. 
+		'''
+		result = self.device.ctrl_transfer(HackRfConstants.HACKRF_DEVICE_OUT,
+			HackRfVendorRequest.HACKRF_VENDOR_REQUEST_BASEBAND_FILTER_BANDWIDTH_SET,
+			bandwidth_hz & 0xffff,
+			bandwidth_hz >> 16)
+		print result
+
+	def set_frequency(self, freq_hz):
+		''' Sets the frequency in hz '''
+		l_freq_mhz = (freq_hz / FREQ_ONE_MHZ)
+		l_freq_hz = (freq_hz - (l_freq_mhz * FREQ_ONE_MHZ));
+
+		print '[%d] Mhz | [%d] Hz' % (l_freq_mhz, l_freq_hz)
+
+		#For some reason we switch endain from freq to sample
+		p =  struct.pack(
+			'<II',
+			l_freq_mhz,
+		 	l_freq_hz)
+		#Print struct to make sure it looks right
+		print "".join(["/x%02x" % ord(c) for c in p]) #
+		result = self.device.ctrl_transfer(HackRfConstants.HACKRF_DEVICE_OUT,
+			HackRfVendorRequest.HACKRF_VENDOR_REQUEST_SET_FREQ,
+			0,
+			0,
+			p,
+			len(p))
+		if result < len(p):
+			logger.error('Error setting freq')
+		else:
+			logger.debug('Set freq')
+
 	def set_sample_rate(self, freq, div):
 		''' Sets the sample rate of the hack rf device '''
 		p =  struct.pack('>II', freq, div)
@@ -131,6 +176,62 @@ class HackRf():
 			logger.error('Error setting sample rate')
 		else:
 			logger.debug('Set Sample rate')
+
+	def set_lna_gain(self, gain):
+		''' Sets the LNA gain, in 8Db steps, maximum value of 40 '''
+		if isinstance( gain, ( int, long ) ):
+			if int(gain) <= 40:
+				result = self.device.ctrl_transfer(HackRfConstants.HACKRF_DEVICE_IN,
+					HackRfVendorRequest.HACKRF_VENDOR_REQUEST_SET_LNA_GAIN,
+					0,
+					gain,
+					1)
+				if result[0] == 1:
+					print "succes!"
+				else:
+					print "failure"
+
+	def set_vga_gain(self, gain):
+		''' Sets the vga gain, in 2db steps, maximum value of 62 '''
+		if isinstance( gain, ( int, long ) ):
+			if int(gain) <= 62:
+				result = self.device.ctrl_transfer(HackRfConstants.HACKRF_DEVICE_IN,
+					HackRfVendorRequest.HACKRF_VENDOR_REQUEST_SET_VGA_GAIN,
+					0,
+					gain,
+					1)
+				if result[0] == 1:
+					print "succes!"
+				else:
+					print "failure"
+
+	def set_txvga_gain(self, gain):
+		''' Sets the txvga gain, in 1db steps, maximum value of 47 '''
+		if isinstance( gain, ( int, long ) ):
+			if int(gain) <= 47:
+				result = self.device.ctrl_transfer(HackRfConstants.HACKRF_DEVICE_IN,
+					HackRfVendorRequest.HACKRF_VENDOR_REQUEST_SET_TXVGA_GAIN,
+					0,
+					gain,
+					1)
+				if result[0] == 1:
+					print "succes!"
+				else:
+					print "failure"
+
+	def enable_amp(self):
+		''' Turns on the amp for the hackrf device '''
+		result = self.device.ctrl_transfer(HackRfConstants.HACKRF_DEVICE_OUT,
+			HackRfVendorRequest.HACKRF_VENDOR_REQUEST_AMP_ENABLE,
+			1,
+			0)
+
+	def disable_amp(self):
+		''' Disable the amp for the hackrf device '''
+		result = self.device.ctrl_transfer(HackRfConstants.HACKRF_DEVICE_OUT,
+			HackRfVendorRequest.HACKRF_VENDOR_REQUEST_AMP_ENABLE,
+			0,
+			0)
 
 	def set_rx_mode(self):
 		''' This sets the HackRf in receive mode '''
