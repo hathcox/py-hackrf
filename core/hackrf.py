@@ -56,7 +56,10 @@ HackRfConstants = enum(
 	HACKRF_DEVICE_OUT = 0x40,
 	HACKRF_DEVICE_IN = 0xC0,
 	HACKRF_USB_VID = 0x1d50,
-	HACKRF_USB_PID = 0x604b)
+	HACKRF_USB_PID = 0x604b,
+	HACKRF_SUCCESS = 0,
+	#Python defaults to returning none 
+	HACKRF_ERROR = None)
 
 HackRfTranscieverMode = enum(
 	HACKRF_TRANSCEIVER_MODE_OFF = 0,
@@ -77,7 +80,6 @@ class HackRf():
 		self.max2837 = None
 		self.si5351c = None
 		self.rffc5071 = None
-		logger.error(HackRfVendorRequest.HACKRF_VENDOR_REQUEST_SET_TRANSCEIVER_MODE)
 
 	def setup(self):
 		''' This is to setup a hackrf device '''
@@ -107,7 +109,6 @@ class HackRf():
 		else:
 			logger.debug('Successfully got Board Id')
 			return board_id
-
 
 	def get_version_string(self):
 		''' Returns the version string from the hackrf board '''
@@ -161,6 +162,7 @@ class HackRf():
 				logger.error('Failed to set Baseband Filter Bandwidth with value [%d]', bandwidth_hz)
 			else:
 				logger.debug('Successfully set Baseband Filter Bandwidth with value [%d]', bandwidth_hz)
+				return HackRfConstants.HACKRF_SUCCESS
 		else:
 			logger.error('Failed to set Baseband Filter Bandwidth, bandwidth_hz should be of type INT or LONG')
 
@@ -187,6 +189,7 @@ class HackRf():
 				logger.error('Error setting frequency with value [%d]', freq_hz)
 			else:
 				logger.debug('Successfully set frequency with value [%d]', freq_hz)
+				return HackRfConstants.HACKRF_SUCCESS
 		else:
 			logger.error('Error setting frequency, value should be of type INT or LONG')
 
@@ -206,6 +209,7 @@ class HackRf():
 				logger.error('Error setting Sample Rate with Frequency [%d] and Divider [%d]', freq, div)
 			else:
 				logger.debug('Successfully set Sample Rate with Frequency [%d] and Divider [%d]', freq, div)
+				return HackRfConstants.HACKRF_SUCCESS
 		else:
 			logger.error('Error setting Sample Rate, Frequency and Divider should be of type INT or LONG')
 
@@ -220,6 +224,7 @@ class HackRf():
 					1)
 				if result[0] != 1:
 					logger.debug('Successfully set LNA gain to [%d]', gain)
+					return HackRfConstants.HACKRF_SUCCESS
 				else:
 					logger.error('Failed to set LNA gain to [%d]', gain)
 			else:
@@ -238,6 +243,7 @@ class HackRf():
 					1)
 				if result[0] == 1:
 					logger.debug('Successfully set VGA gain to [%d]', gain)
+					return HackRfConstants.HACKRF_SUCCESS
 				else:
 					logger.error('Failed to set VGA gain to [%d]', gain)
 			else:
@@ -256,6 +262,7 @@ class HackRf():
 					1)
 				if result[0] == 1:
 					logger.debug('Successfully set TXVGA gain to [%d]', gain)
+					return HackRfConstants.HACKRF_SUCCESS
 				else:
 					logger.error('Failed to set TXVGA gain to [%d]', gain)
 			else:
@@ -271,6 +278,7 @@ class HackRf():
 			0)
 		if result == 0:
 			logger.debug('Successfully enabled Amp')
+			return HackRfConstants.HACKRF_SUCCESS
 		else:
 			logger.error('Failed to enable Amp')
 
@@ -282,6 +290,7 @@ class HackRf():
 			0)
 		if result == 0:
 			logger.debug('Successfully disabled Amp')
+			return HackRfConstants.HACKRF_SUCCESS
 		else:
 			logger.error('Failed to disable Amp')
 
@@ -292,15 +301,17 @@ class HackRf():
 			HackRfTranscieverMode.HACKRF_TRANSCEIVER_MODE_RECEIVE, 0)
 		if result == 0:
 			logger.debug('Successfully set HackRf in Recieve Mode')
+			return HackRfConstants.HACKRF_SUCCESS
 		else:
 			logger.error('Failed to set HackRf in Recieve Mode')
 
 	def set_tx_mode(self):
 		''' This sets the HackRf in tranfer mode '''
-		self.device.ctrl_transfer(HackRfConstants.HACKRF_DEVICE_OUT,
+		result = self.device.ctrl_transfer(HackRfConstants.HACKRF_DEVICE_OUT,
 			HackRfVendorRequest.HACKRF_VENDOR_REQUEST_SET_TRANSCEIVER_MODE,
 			HackRfTranscieverMode.HACKRF_TRANSCEIVER_MODE_TRANSMIT, 0)
 		if result == 0:
 			logger.debug('Successfully set HackRf in Transfer Mode')
+			return HackRfConstants.HACKRF_SUCCESS
 		else:
 			logger.error('Failed to set HackRf in Transfer Mode')
