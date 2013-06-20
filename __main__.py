@@ -1,6 +1,6 @@
 from core import HackRf
 
-hr = HackRf(HackRf.__JAWBREAKER__)
+hr = HackRf()
 hr.setup()
 print hr.rffc5071.read_register(10)
 hr.rffc5071.write_register(10, 14)
