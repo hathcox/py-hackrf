@@ -1,19 +1,22 @@
 from core import HackRf
 from test import TestHackRf
 import unittest
+import sys
 
-unittest.main()
+def banner():
+	''' Display the information banner '''
+	print 'Welcome to Py-HackRf, to run unit tests run the following command:'
+	print 'python . test'
 
-
-# hr = HackRf()
-# hr.setup()
-# print hr.rffc5071.read_register(10)
-# hr.rffc5071.write_register(10, 14)
-# print hr.rffc5071.read_register(10)
-
-# # hr.si5351c.display_registers()
-# print hr.get_board_serial_number()
-# hr.set_baseband_filter_bandwidth(500000)
-#hr.set_rx_mode()
-#hr.set_sample_rate(10000000, 1)
-
+args = sys.argv
+if len(args) >= 2: 
+	command = args[1]
+	if command.lower() != 'test':
+		banner()
+		sys.exit(0)
+	else:
+		# Start the unit tests
+		suite = unittest.TestLoader().loadTestsFromTestCase(TestHackRf)
+		unittest.TextTestRunner(verbosity=2).run(suite)
+else:
+	banner()
