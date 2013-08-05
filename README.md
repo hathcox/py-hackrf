@@ -9,25 +9,4 @@ pip install pyusb
 Usage
 -------------
 
-import the library
-
-`from core import HackRf`
-
-Create a HackRf object
-
-`hr = HackRf()` 
-
-Initialize the library and get it ready for use
-
-`hr.setup()`
-
-
-Use it to do things, methods are very similair to libhackrf
-
-`hr.max2837.write_register(10, 14)`
-
-`print hr.max2837.read_register(10)`
-
-`print hr.get_version_string()`
-
-`hr.set_frequency(50000000)`
+Checkout the Wiki [Here](https://github.com/hathcox/py-hackrf/wiki)
